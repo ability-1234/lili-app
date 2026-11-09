@@ -1,0 +1,27 @@
+name: Check Worker
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare Worker responds Hello from lili
+        run: |
+          set -e
+          echo "Checking https://lili-hello.learningask-1.workers.dev/"
+          status=$(curl -s -o /tmp/worker-response.txt -w "%{http_code}" https://lili-hello.learningask-1.workers.dev/)
+          echo "HTTP status: $status"
+          cat /tmp/worker-response.txt
+          if [ "$status" != "200" ]; then
+            echo "Worker check failed: expected HTTP 200, got $status"
+            exit 1
+          fi
+          if ! grep -q "Hello from lili" /tmp/worker-response.txt; then
+            echo "Worker check failed: response does not contain 'Hello from lili'"
+            exit 1
+          fi
+          echo "Worker is up and returns Hello from lili"
